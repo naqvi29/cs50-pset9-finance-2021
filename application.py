@@ -54,7 +54,43 @@ def index():
 def buy():
     """Buy shares of stock"""
     if request.method == "POST":
+        symbol = request.form.get("symbol")
+        result = lookup(symbol)
+        shares = request.form.get("shares")
+
+        currentUID = session["user_id"]
+        
         # if symbol is blank or does not exist, return apology
+        if len(symbol) > 0 and result == None:
+            return apology("Invalid Symbol", 400)
+        elif len(symbol) == 0 and result == None:
+            return apology("Missing Symbol", 400)
+
+        # Render an apology if the input is not a positive integer.
+        if len(shares) == 0:
+            return apology("MISSING SHARES", 400)
+        elif int(shares) < 0:
+            return apology("NEGATIVE NUMBER", 400)
+
+        # access user table to get cash of current user
+        # https://stackoverflow.com/questions/46723767/how-to-get-current-user-when-implementing-python-flask-security
+        cash = db.execute("SELECT cash FROM users WHERE id = ?;", currentUID)
+        cash = cash[0]["cash"]
+        # cash is int
+
+        print("==========================================================================")
+        print("USER INPUT")
+        print("symbol: " + symbol)
+        print("shares: " + shares)
+        print("==========================================================================")
+        print("LOOKUP RETURN")
+        print(result)
+        print("==========================================================================")
+        print("DATABASE OUTPUT")
+        print("id "+ str(currentUID))
+        print(cash)
+        print("==========================================================================")
+
         return redirect("/")
     else:
         return render_template("/buy.html")
@@ -124,11 +160,11 @@ def quote():
         # name = result.get("name")
         # price = result.get("price")
         # symbol = result.get("symbol")
-        print("==========================")
-        print(len(symbol))
-        print("==========================")
-        print(result)
-        print("==========================")
+        # print("==========================")
+        # print(len(symbol))
+        # print("==========================")
+        # print(result)
+        # print("==========================")
         if len(symbol) > 0 and result == None:
             return apology("Invalid Symbol", 400)
         elif len(symbol) == 0 and result == None:
