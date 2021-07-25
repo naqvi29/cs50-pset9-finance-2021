@@ -88,7 +88,7 @@ def buy():
             return apology("CAN'T AFFORD", 400)
         else:
             # todo
-            balance = float(cash) - total_buy
+            balance = round(float(cash) - total_buy, 2)
 
 
             # debug
