@@ -66,7 +66,7 @@ def buy():
         elif len(symbol) == 0 and result == None:
             return apology("Missing Symbol", 400)
 
-        # Render an apology if the input is not a positive integer.
+        # Render an apology if shares input is not a positive integer.
         if len(shares) == 0:
             return apology("MISSING SHARES", 400)
         elif int(shares) < 0:
@@ -78,20 +78,43 @@ def buy():
         cash = cash[0]["cash"]
         # cash is int
 
-        print("==========================================================================")
-        print("USER INPUT")
-        print("symbol: " + symbol)
-        print("shares: " + shares)
-        print("==========================================================================")
-        print("LOOKUP RETURN")
-        print(result)
-        print("==========================================================================")
-        print("DATABASE OUTPUT")
-        print("id "+ str(currentUID))
-        print(cash)
-        print("==========================================================================")
+        price = result.get("price")
+        total_buy = float(shares) * price
+        # total_buy = usd(total_buy)
+        total_buy = round(total_buy, 2)
 
-        return redirect("/")
+        # Render an apology, without completing a purchase, if the user cannot afford the number of shares at the current price
+        if total_buy > cash:
+            return apology("CAN'T AFFORD", 400)
+        else:
+            # todo
+            balance = float(cash) - total_buy
+
+
+            # debug
+            print("==========================================================================")
+            print("USER INPUT")
+            print("SYMBOL: " + symbol)
+            print("SHARES: " + shares)
+            print("==========================================================================")
+            print("LOOKUP RETURN")
+            print(result)
+            print("==========================================================================")
+            print("DATABASE OUTPUT")
+            print("ID: "+ str(currentUID))
+            print("CURRENT CASH: " + str(cash))
+            print("CURRENT CASH DATATYPE: " + str(type(cash)))
+            print("==========================================================================")
+            print("BUY LOGICS")
+            print("SHARES: " + str(shares))
+            print("PRICE: " + str(price))
+            print("TOTAL BUY: " + str(total_buy))
+            print("TOTAL BUY DATATYPE: " + str(type(total_buy)))
+            print("BALANCE: " + str(balance))
+            print("==========================================================================")
+
+            # When a purchase is complete, redirect the user back to the index page.
+            return redirect("/")
     else:
         return render_template("/buy.html")
 
