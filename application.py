@@ -54,6 +54,7 @@ def index():
 def buy():
     """Buy shares of stock"""
     if request.method == "POST":
+        # if symbol is blank or does not exist, return apology
         return redirect("/")
     else:
         return render_template("/buy.html")
@@ -123,11 +124,16 @@ def quote():
         # name = result.get("name")
         # price = result.get("price")
         # symbol = result.get("symbol")
-        return render_template("/quoted.html", result=result)
+        # print("==========================")
+        # print(result)
+        # print("==========================")
+        if not result:
+            return apology("Missing Symbol", 400)
+        else:
+            return render_template("/quoted.html", result=result)
     else:
         return render_template("/quote.html")
-        # return apology("get_stock_quote", "TODO")
-
+        
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
