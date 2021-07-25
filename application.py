@@ -124,10 +124,14 @@ def quote():
         # name = result.get("name")
         # price = result.get("price")
         # symbol = result.get("symbol")
-        # print("==========================")
-        # print(result)
-        # print("==========================")
-        if not result:
+        print("==========================")
+        print(len(symbol))
+        print("==========================")
+        print(result)
+        print("==========================")
+        if len(symbol) > 0 and result == None:
+            return apology("Invalid Symbol", 400)
+        elif len(symbol) == 0 and result == None:
             return apology("Missing Symbol", 400)
         else:
             return render_template("/quoted.html", result=result)
