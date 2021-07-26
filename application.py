@@ -50,14 +50,26 @@ def index():
 
     portfolios = db.execute("SELECT symbol, SUM(shares) as totalshares, price, SUM(shares) * price as totalvalue FROM activities GROUP BY symbol HAVING user_id = ?", currentUID)
 
+    # share_price_total = 0
+
+    # share_price_total = db.execute("SELECT SUM(price * shares) FROM activities WHERE user_id = ?", currentUID)
+
+    cash = 10000.00
+
+    cash_balance = 0
+
+    # cash_balance = cash - share_price_total[0]["SUM(price * shares)"]
+
     print("==========================================================================")
     print(portfolios)
     print("==========================================================================")
     # print(portfolios[0]["symbol"])
     # print(portfolios[0]["SUM(shares)"])
-    # print("==========================================================================")
+    # print(share_price_total)
+    print(cash_balance)
+    print("==========================================================================")
 
-    return render_template("/index.html", portfolios=portfolios)
+    return render_template("/index.html", portfolios=portfolios, cash_balance=cash_balance )
     # return apology("show_portfolio_of_stocks", "TODO")
 
 
@@ -166,6 +178,8 @@ def login():
 
         # Query database for username
         rows = db.execute("SELECT * FROM users WHERE username = ?", request.form.get("username"))
+
+        print(rows)
 
         # Ensure username exists and password is correct
         if len(rows) != 1 or not check_password_hash(rows[0]["hash"], request.form.get("password")):
