@@ -46,7 +46,19 @@ if not os.environ.get("API_KEY"):
 @login_required
 def index():
     """Show portfolio of stocks"""
-    return apology("show_portfolio_of_stocks", "TODO")
+    currentUID = session["user_id"]
+
+    portfolios = db.execute("SELECT symbol, SUM(shares) as totalshares, price, SUM(shares) * price as totalvalue FROM activities GROUP BY symbol HAVING user_id = ?", currentUID)
+
+    print("==========================================================================")
+    print(portfolios)
+    print("==========================================================================")
+    # print(portfolios[0]["symbol"])
+    # print(portfolios[0]["SUM(shares)"])
+    # print("==========================================================================")
+
+    return render_template("/index.html", portfolios=portfolios)
+    # return apology("show_portfolio_of_stocks", "TODO")
 
 
 @app.route("/buy", methods=["GET", "POST"])
@@ -55,6 +67,7 @@ def buy():
     """Buy shares of stock"""
     if request.method == "POST":
         symbol = request.form.get("symbol")
+        symbol = symbol.upper()
         result = lookup(symbol)
         shares = request.form.get("shares")
 
@@ -112,6 +125,13 @@ def buy():
             print("TOTAL BUY DATATYPE: " + str(type(total_buy)))
             print("BALANCE: " + str(balance))
             print("==========================================================================")
+
+            # sqlite date time
+            # https://www.sqlitetutorial.net/sqlite-date/
+            # https://tableplus.com/blog/2018/07/sqlite-how-to-use-datetime-value.html
+            
+            # insert to DB, to transactions table, on buy activity
+            db.execute("INSERT INTO activities (user_id, symbol, price, shares, date_time) values (?, ?, ?, ?, datetime('now', 'localtime'))", currentUID, symbol, price, shares)
 
             # When a purchase is complete, redirect the user back to the index page.
             return redirect("/")
