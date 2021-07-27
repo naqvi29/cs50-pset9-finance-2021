@@ -67,7 +67,7 @@ def index():
         print("============================================================================")
         
         cash = db.execute("SELECT cash FROM users WHERE id = ?;", session["user_id"])
-        cash_before = cash[0]["cash"]
+        cash_before = usd(cash[0]["cash"])
         print("==========================================================================")
         print("CASH BALANCE")
         print(cash_before)
@@ -80,13 +80,13 @@ def index():
         print("============================================================================")
 
         cash = db.execute("SELECT cash_after FROM activities WHERE user_id = ? ORDER BY date_time DESC LIMIT 1;", session["user_id"])
-        cash_before = cash[0]["cash_after"]
+        cash_before = usd(cash[0]["cash_after"])
         print("==========================================================================")
         print("CASH BALANCE")
         print(cash_before)
         print("==========================================================================")
 
-    return render_template("/index.html", portfolios=portfolios)
+    return render_template("/index.html", portfolios=portfolios, cash_before=cash_before)
 
 
 @app.route("/buy", methods=["GET", "POST"])
@@ -242,7 +242,8 @@ def buy():
 @login_required
 def history():
     """Show history of transactions"""
-    return apology("show_history_transactions","TODO")
+    return render_template("/history.html")
+    # return apology("show_history_transactions","TODO")
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -327,9 +328,9 @@ def quote():
         # symbol = result.get("symbol")
         # print("==========================")
         # print(len(symbol))
-        # print("==========================")
-        # print(result)
-        # print("==========================")
+        print("==========================")
+        print(result)
+        print("==========================")
         if len(symbol) > 0 and result == None:
             return apology("Invalid Symbol", 400)
         elif len(symbol) == 0 and result == None:

@@ -1,31 +1,22 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Portfolio
+    History
 {% endblock %}
 
 {% block main %}
-    <h1>Portfolio</h1>
+    <h1>History</h1>
     
     <table class="table table-striped text-left">
         <thead>
             <tr>
                 <th>Symbol</th>
-                <th>Name</th>
+                <th>Action</th>
                 <th>Shares</th>
                 <th>Price</th>
-                <th>TOTAL</th>
+                <th>Transacted on</th>
             </tr>
         </thead>
-        <tfoot>
-            <tr>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td><strong>[TOTAL]</strong></td>
-            </tr>
-        </tfoot>
         <tbody>
             
             {% for portfolio in portfolios %}
@@ -51,14 +42,6 @@
                 </td>
             </tr>
             {% endfor %}
-            <tr>
-                <td>CASH</td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td>{{cash_before}}</td>
-            </tr>
-            
         </tbody>
     </table>
 {% endblock %}
