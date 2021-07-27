@@ -46,30 +46,20 @@ if not os.environ.get("API_KEY"):
 @login_required
 def index():
     """Show portfolio of stocks"""
+    print("============================================================================")
+    print("INDEX")
     currentUID = session["user_id"]
 
     portfolios = db.execute("SELECT symbol, SUM(shares) as totalshares, price, SUM(shares) * price as totalvalue FROM activities GROUP BY symbol HAVING user_id = ?", currentUID)
+    
+    # cash = cash[0]["cash_after"]
 
-    # share_price_total = 0
-
-    # share_price_total = db.execute("SELECT SUM(price * shares) FROM activities WHERE user_id = ?", currentUID)
-
-    cash = 10000.00
-
-    cash_balance = 0
-
-    # cash_balance = cash - share_price_total[0]["SUM(price * shares)"]
-
-    print("==========================================================================")
     print(portfolios)
     print("==========================================================================")
-    # print(portfolios[0]["symbol"])
-    # print(portfolios[0]["SUM(shares)"])
-    # print(share_price_total)
-    print(cash_balance)
-    print("==========================================================================")
+    # print("CASH BALANCE")
+    # print("==========================================================================")
 
-    return render_template("/index.html", portfolios=portfolios, cash_balance=cash_balance )
+    return render_template("/index.html", portfolios=portfolios)
     # return apology("show_portfolio_of_stocks", "TODO")
 
 
@@ -78,6 +68,8 @@ def index():
 def buy():
     """Buy shares of stock"""
     if request.method == "POST":
+        print("============================================================================")
+        print("BUY")
         symbol = request.form.get("symbol")
         symbol = symbol.upper()
         result = lookup(symbol)
@@ -97,56 +89,125 @@ def buy():
         elif int(shares) < 0:
             return apology("NEGATIVE NUMBER", 400)
 
-        # access user table to get cash of current user
-        # https://stackoverflow.com/questions/46723767/how-to-get-current-user-when-implementing-python-flask-security
-        cash = db.execute("SELECT cash FROM users WHERE id = ?;", currentUID)
-        cash = cash[0]["cash"]
-        # cash is int
+        spent_cash = db.execute("SELECT spent_cash FROM profile WHERE user_id = ? ORDER BY date_time DESC LIMIT 1", currentUID)
+        spent_cash = spent_cash[0]["spent_cash"]
+        print("============================================================================")
+        print("SPENT CASH - 0 is FALSE, 1 is TRUE (0, 1 is int)")
+        print(spent_cash)
+        print("============================================================================")
 
-        price = result.get("price")
-        total_buy = float(shares) * price
-        # total_buy = usd(total_buy)
-        total_buy = round(total_buy, 2)
+        if spent_cash == 0:
+            # access user table to get cash of current user
+            # https://stackoverflow.com/questions/46723767/how-to-get-current-user-when-implementing-python-flask-security
+            cash = db.execute("SELECT cash FROM users WHERE id = ?;", currentUID)
+            # cash is int
+            cash_before = cash[0]["cash"]
+        
+            # get price of share from lookup result
+            price = result.get("price")
 
-        # Render an apology, without completing a purchase, if the user cannot afford the number of shares at the current price
-        if total_buy > cash:
-            return apology("CAN'T AFFORD", 400)
-        else:
-            # todo
-            balance = round(float(cash) - total_buy, 2)
+            # compute total purchase
+            total_purchase = float(shares) * price
+            total_purchase = round(total_purchase, 2)
 
+            # Render an apology, without completing a purchase, if the user cannot afford the number of shares at the current price
+            if total_purchase > cash_before:
+                return apology("CAN'T AFFORD", 400)
+            else:
+                # Compute cash left after purchase
+                cash_after = round(float(cash_before) - total_purchase, 2)
 
-            # debug
-            print("==========================================================================")
-            print("USER INPUT")
-            print("SYMBOL: " + symbol)
-            print("SHARES: " + shares)
-            print("==========================================================================")
-            print("LOOKUP RETURN")
-            print(result)
-            print("==========================================================================")
-            print("DATABASE OUTPUT")
-            print("ID: "+ str(currentUID))
-            print("CURRENT CASH: " + str(cash))
-            print("CURRENT CASH DATATYPE: " + str(type(cash)))
-            print("==========================================================================")
-            print("BUY LOGICS")
-            print("SHARES: " + str(shares))
-            print("PRICE: " + str(price))
-            print("TOTAL BUY: " + str(total_buy))
-            print("TOTAL BUY DATATYPE: " + str(type(total_buy)))
-            print("BALANCE: " + str(balance))
-            print("==========================================================================")
+                # debug
+                print("==========================================================================")
+                print("USER INPUT")
+                print("SYMBOL: " + symbol)
+                print("SHARES: " + shares)
+                print("==========================================================================")
+                print("LOOKUP RETURN")
+                print(result)
+                print("==========================================================================")
+                print("DATABASE OUTPUT")
+                print("ID: "+ str(currentUID))
+                print("CURRENT CASH: " + str(cash_before))
+                print("CURRENT CASH DATATYPE: " + str(type(cash_before)))
+                print("==========================================================================")
+                print("BUY LOGICS")
+                print("SHARES: " + str(shares))
+                print("PRICE: " + str(price))
+                print("TOTAL BUY: " + str(total_purchase))
+                print("TOTAL BUY DATATYPE: " + str(type(total_purchase)))
+                print("BALANCE: " + str(cash_after))
+                print("==========================================================================")
 
-            # sqlite date time
-            # https://www.sqlitetutorial.net/sqlite-date/
-            # https://tableplus.com/blog/2018/07/sqlite-how-to-use-datetime-value.html
-            
-            # insert to DB, to transactions table, on buy activity
-            db.execute("INSERT INTO activities (user_id, symbol, price, shares, date_time) values (?, ?, ?, ?, datetime('now', 'localtime'))", currentUID, symbol, price, shares)
+                # sqlite date time
+                # https://www.sqlitetutorial.net/sqlite-date/
+                # https://tableplus.com/blog/2018/07/sqlite-how-to-use-datetime-value.html
+                
+                # set action
+                action = "Buy"
 
-            # When a purchase is complete, redirect the user back to the index page.
-            return redirect("/")
+                # insert to DB, to transactions table, on buy activity
+                db.execute("INSERT INTO activities (user_id, symbol, price, shares, action, cash_before, cash_after, date_time) values (?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))", currentUID, symbol, price, shares, action, cash_before, cash_after)
+
+                # update profile spent_cash to true
+                db.execute("INSERT INTO profile (user_id, spent_cash, date_time) values (?, 1, datetime('now', 'localtime'))", currentUID)
+
+                # When a purchase is complete, redirect the user back to the index page.
+                return redirect("/")
+        elif spent_cash == 1:
+            cash = db.execute("SELECT cash_after FROM activities WHERE id = ? ORDER BY date_time LIMIT 1;", currentUID)
+            # cash is int
+            cash_before = cash[0]["cash_after"]
+        
+            # get price of share from lookup result
+            price = result.get("price")
+
+            # compute total purchase
+            total_purchase = float(shares) * price
+            total_purchase = round(total_purchase, 2)
+
+            # Render an apology, without completing a purchase, if the user cannot afford the number of shares at the current price
+            if total_purchase > cash_before:
+                return apology("CAN'T AFFORD", 400)
+            else:
+                # Compute cash left after purchase
+                cash_after = round(float(cash_before) - total_purchase, 2)
+
+                # debug
+                print("==========================================================================")
+                print("USER INPUT")
+                print("SYMBOL: " + symbol)
+                print("SHARES: " + shares)
+                print("==========================================================================")
+                print("LOOKUP RETURN")
+                print(result)
+                print("==========================================================================")
+                print("DATABASE OUTPUT")
+                print("ID: "+ str(currentUID))
+                print("CURRENT CASH: " + str(cash_before))
+                print("CURRENT CASH DATATYPE: " + str(type(cash_before)))
+                print("==========================================================================")
+                print("BUY LOGICS")
+                print("SHARES: " + str(shares))
+                print("PRICE: " + str(price))
+                print("TOTAL BUY: " + str(total_purchase))
+                print("TOTAL BUY DATATYPE: " + str(type(total_purchase)))
+                print("BALANCE: " + str(cash_after))
+                print("==========================================================================")
+
+                # sqlite date time
+                # https://www.sqlitetutorial.net/sqlite-date/
+                # https://tableplus.com/blog/2018/07/sqlite-how-to-use-datetime-value.html
+                
+                # set action
+                action = "Buy"
+
+                # insert to DB, to transactions table, on buy activity
+                db.execute("INSERT INTO activities (user_id, symbol, price, shares, action, cash_before, cash_after, date_time) values (?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))", currentUID, symbol, price, shares, action, cash_before, cash_after)
+
+                # When a purchase is complete, redirect the user back to the index page.
+                return redirect("/")
+
     else:
         return render_template("/buy.html")
 
@@ -187,6 +248,24 @@ def login():
 
         # Remember which user has logged in
         session["user_id"] = rows[0]["id"]
+
+        # Check for first time login
+        currentUID = session["user_id"]
+        
+        num_of_login = db.execute("SELECT COUNT(*) FROM profile WHERE user_id = ?", currentUID)
+        num_of_login = num_of_login[0]["COUNT(*)"]
+
+        if num_of_login == 0:
+            db.execute("INSERT INTO profile (user_id, spent_cash, date_time) values (?, 0, datetime('now', 'localtime'))", currentUID)
+        else:
+            spent_cash_check = db.execute("SELECT spent_cash FROM profile WHERE user_id = ? ORDER BY date_time DESC LIMIT 1", currentUID)
+            spent_cash_check = spent_cash_check[0]["spent_cash"]
+
+            if spent_cash_check == 0:
+                db.execute("INSERT INTO profile (user_id, spent_cash, date_time) values (?, 0, datetime('now', 'localtime'))", currentUID)
+            elif spent_cash_check == 1:
+                db.execute("INSERT INTO profile (user_id, spent_cash, date_time) values (?, 1, datetime('now', 'localtime'))", currentUID)
+
 
         # Redirect user to home page
         return redirect("/")
