@@ -59,7 +59,7 @@ def index():
     print("============================================================================")
 
     # get total shares of each symbol
-    portfolios = db.execute("SELECT symbol, SUM(shares) as totalshares FROM activities GROUP BY symbol HAVING user_id = ?", session["user_id"])
+    portfolios = db.execute("SELECT symbol, SUM(shares) as totalshares FROM activities WHERE user_id = ? GROUP BY symbol", session["user_id"])
     
     print("============================================================================")
     print("PORTFOLIO")
