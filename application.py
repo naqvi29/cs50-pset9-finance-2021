@@ -64,19 +64,21 @@ def index():
     print("============================================================================")
     print("PORTFOLIO")
     print(portfolios)
-    print("==========================================================================")
-    
-    print("CASH BALANCE")
-    
+    print("============================================================================")
+        
     if spent_cash == 0:
         cash = db.execute("SELECT cash FROM users WHERE id = ?;", session["user_id"])
         cash_before = cash[0]["cash"]
+        print("==========================================================================")
+        print("CASH BALANCE")
         print(cash_before)
         print("==========================================================================")
         
     elif spent_cash == 1:
         cash = db.execute("SELECT cash_after FROM activities WHERE user_id = ? ORDER BY date_time DESC LIMIT 1;", session["user_id"])
         cash_before = cash[0]["cash_after"]
+        print("==========================================================================")
+        print("CASH BALANCE")
         print(cash_before)
         print("==========================================================================")
 
@@ -268,6 +270,8 @@ def login():
 
         # Remember which user has logged in
         session["user_id"] = rows[0]["id"]
+
+        session["username"] = rows[0]["username"]
 
         # Check for first time login
         

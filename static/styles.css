@@ -54,3 +54,8 @@ svg.bi.bi-emoji-sunglasses-xl {
     height: 24px !important;
     width: 24px !important;
 }
+
+.username {
+    display: block;
+    padding: 0.5rem 1rem;
+}
