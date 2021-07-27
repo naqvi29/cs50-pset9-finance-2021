@@ -52,12 +52,6 @@ def index():
     spent_cash = db.execute("SELECT spent_cash FROM profile WHERE user_id = ? ORDER BY date_time DESC LIMIT 1", session["user_id"])
     spent_cash = spent_cash[0]["spent_cash"]
     
-    
-    print("============================================================================")
-    print("SPENT CASH - 0 is FALSE, 1 is TRUE (0, 1 is int)")
-    print(spent_cash)
-    print("============================================================================")
-
     # get total shares of each symbol
     portfolios = db.execute("SELECT symbol, SUM(shares) as totalshares FROM activities WHERE user_id = ? GROUP BY symbol", session["user_id"])
     
@@ -67,6 +61,11 @@ def index():
     print("============================================================================")
         
     if spent_cash == 0:
+        print("============================================================================")
+        print("SPENT CASH")
+        print("FALSE - user(" + session["username"] + ") HAVE NOT purchase stock")
+        print("============================================================================")
+        
         cash = db.execute("SELECT cash FROM users WHERE id = ?;", session["user_id"])
         cash_before = cash[0]["cash"]
         print("==========================================================================")
@@ -75,6 +74,11 @@ def index():
         print("==========================================================================")
         
     elif spent_cash == 1:
+        print("============================================================================")
+        print("SPENT CASH")
+        print("TRUE - user(" + session["username"] + ") HAVE purchase stock")
+        print("============================================================================")
+
         cash = db.execute("SELECT cash_after FROM activities WHERE user_id = ? ORDER BY date_time DESC LIMIT 1;", session["user_id"])
         cash_before = cash[0]["cash_after"]
         print("==========================================================================")
