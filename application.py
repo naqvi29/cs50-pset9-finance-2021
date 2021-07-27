@@ -155,7 +155,7 @@ def buy():
                 # When a purchase is complete, redirect the user back to the index page.
                 return redirect("/")
         elif spent_cash == 1:
-            cash = db.execute("SELECT cash_after FROM activities WHERE id = ? ORDER BY date_time LIMIT 1;", currentUID)
+            cash = db.execute("SELECT cash_after FROM activities WHERE user_id = ? ORDER BY date_time DESC LIMIT 1;", currentUID)
             # cash is int
             cash_before = cash[0]["cash_after"]
         
