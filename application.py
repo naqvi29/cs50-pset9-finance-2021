@@ -46,21 +46,41 @@ if not os.environ.get("API_KEY"):
 @login_required
 def index():
     """Show portfolio of stocks"""
-    print("============================================================================")
-    print("INDEX")
-    currentUID = session["user_id"]
-
-    portfolios = db.execute("SELECT symbol, SUM(shares) as totalshares, price, SUM(shares) * price as totalvalue FROM activities GROUP BY symbol HAVING user_id = ?", currentUID)
     
-    # cash = cash[0]["cash_after"]
+    # currentUID = session["user_id"]
 
+    spent_cash = db.execute("SELECT spent_cash FROM profile WHERE user_id = ? ORDER BY date_time DESC LIMIT 1", session["user_id"])
+    spent_cash = spent_cash[0]["spent_cash"]
+    
+    
+    print("============================================================================")
+    print("SPENT CASH - 0 is FALSE, 1 is TRUE (0, 1 is int)")
+    print(spent_cash)
+    print("============================================================================")
+
+    # get total shares of each symbol
+    portfolios = db.execute("SELECT symbol, SUM(shares) as totalshares FROM activities GROUP BY symbol HAVING user_id = ?", session["user_id"])
+    
+    print("============================================================================")
+    print("PORTFOLIO")
     print(portfolios)
     print("==========================================================================")
-    # print("CASH BALANCE")
-    # print("==========================================================================")
+    
+    print("CASH BALANCE")
+    
+    if spent_cash == 0:
+        cash = db.execute("SELECT cash FROM users WHERE id = ?;", session["user_id"])
+        cash_before = cash[0]["cash"]
+        print(cash_before)
+        print("==========================================================================")
+        
+    elif spent_cash == 1:
+        cash = db.execute("SELECT cash_after FROM activities WHERE user_id = ? ORDER BY date_time DESC LIMIT 1;", session["user_id"])
+        cash_before = cash[0]["cash_after"]
+        print(cash_before)
+        print("==========================================================================")
 
     return render_template("/index.html", portfolios=portfolios)
-    # return apology("show_portfolio_of_stocks", "TODO")
 
 
 @app.route("/buy", methods=["GET", "POST"])
@@ -75,7 +95,7 @@ def buy():
         result = lookup(symbol)
         shares = request.form.get("shares")
 
-        currentUID = session["user_id"]
+        # currentUID = session["user_id"]
         
         # if symbol is blank or does not exist, return apology
         if len(symbol) > 0 and result == None:
@@ -89,7 +109,7 @@ def buy():
         elif int(shares) < 0:
             return apology("NEGATIVE NUMBER", 400)
 
-        spent_cash = db.execute("SELECT spent_cash FROM profile WHERE user_id = ? ORDER BY date_time DESC LIMIT 1", currentUID)
+        spent_cash = db.execute("SELECT spent_cash FROM profile WHERE user_id = ? ORDER BY date_time DESC LIMIT 1", session["user_id"])
         spent_cash = spent_cash[0]["spent_cash"]
         print("============================================================================")
         print("SPENT CASH - 0 is FALSE, 1 is TRUE (0, 1 is int)")
@@ -99,7 +119,7 @@ def buy():
         if spent_cash == 0:
             # access user table to get cash of current user
             # https://stackoverflow.com/questions/46723767/how-to-get-current-user-when-implementing-python-flask-security
-            cash = db.execute("SELECT cash FROM users WHERE id = ?;", currentUID)
+            cash = db.execute("SELECT cash FROM users WHERE id = ?;", session["user_id"])
             # cash is int
             cash_before = cash[0]["cash"]
         
@@ -127,7 +147,7 @@ def buy():
                 print(result)
                 print("==========================================================================")
                 print("DATABASE OUTPUT")
-                print("ID: "+ str(currentUID))
+                print("ID: "+ str(session["user_id"]))
                 print("CURRENT CASH: " + str(cash_before))
                 print("CURRENT CASH DATATYPE: " + str(type(cash_before)))
                 print("==========================================================================")
@@ -147,15 +167,15 @@ def buy():
                 action = "Buy"
 
                 # insert to DB, to transactions table, on buy activity
-                db.execute("INSERT INTO activities (user_id, symbol, price, shares, action, cash_before, cash_after, date_time) values (?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))", currentUID, symbol, price, shares, action, cash_before, cash_after)
+                db.execute("INSERT INTO activities (user_id, symbol, price, shares, action, cash_before, cash_after, date_time) values (?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))", session["user_id"], symbol, price, shares, action, cash_before, cash_after)
 
                 # update profile spent_cash to true
-                db.execute("INSERT INTO profile (user_id, spent_cash, date_time) values (?, 1, datetime('now', 'localtime'))", currentUID)
+                db.execute("INSERT INTO profile (user_id, spent_cash, date_time) values (?, 1, datetime('now', 'localtime'))", session["user_id"])
 
                 # When a purchase is complete, redirect the user back to the index page.
                 return redirect("/")
         elif spent_cash == 1:
-            cash = db.execute("SELECT cash_after FROM activities WHERE user_id = ? ORDER BY date_time DESC LIMIT 1;", currentUID)
+            cash = db.execute("SELECT cash_after FROM activities WHERE user_id = ? ORDER BY date_time DESC LIMIT 1;", session["user_id"])
             # cash is int
             cash_before = cash[0]["cash_after"]
         
@@ -183,7 +203,7 @@ def buy():
                 print(result)
                 print("==========================================================================")
                 print("DATABASE OUTPUT")
-                print("ID: "+ str(currentUID))
+                print("ID: "+ str(session["user_id"]))
                 print("CURRENT CASH: " + str(cash_before))
                 print("CURRENT CASH DATATYPE: " + str(type(cash_before)))
                 print("==========================================================================")
@@ -203,7 +223,7 @@ def buy():
                 action = "Buy"
 
                 # insert to DB, to transactions table, on buy activity
-                db.execute("INSERT INTO activities (user_id, symbol, price, shares, action, cash_before, cash_after, date_time) values (?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))", currentUID, symbol, price, shares, action, cash_before, cash_after)
+                db.execute("INSERT INTO activities (user_id, symbol, price, shares, action, cash_before, cash_after, date_time) values (?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))", session["user_id"], symbol, price, shares, action, cash_before, cash_after)
 
                 # When a purchase is complete, redirect the user back to the index page.
                 return redirect("/")
@@ -250,21 +270,22 @@ def login():
         session["user_id"] = rows[0]["id"]
 
         # Check for first time login
-        currentUID = session["user_id"]
         
-        num_of_login = db.execute("SELECT COUNT(*) FROM profile WHERE user_id = ?", currentUID)
+        # currentUID = session["user_id"]
+        
+        num_of_login = db.execute("SELECT COUNT(*) FROM profile WHERE user_id = ?", session["user_id"])
         num_of_login = num_of_login[0]["COUNT(*)"]
 
         if num_of_login == 0:
-            db.execute("INSERT INTO profile (user_id, spent_cash, date_time) values (?, 0, datetime('now', 'localtime'))", currentUID)
+            db.execute("INSERT INTO profile (user_id, spent_cash, date_time) values (?, 0, datetime('now', 'localtime'))", session["user_id"])
         else:
-            spent_cash_check = db.execute("SELECT spent_cash FROM profile WHERE user_id = ? ORDER BY date_time DESC LIMIT 1", currentUID)
+            spent_cash_check = db.execute("SELECT spent_cash FROM profile WHERE user_id = ? ORDER BY date_time DESC LIMIT 1", session["user_id"])
             spent_cash_check = spent_cash_check[0]["spent_cash"]
 
             if spent_cash_check == 0:
-                db.execute("INSERT INTO profile (user_id, spent_cash, date_time) values (?, 0, datetime('now', 'localtime'))", currentUID)
+                db.execute("INSERT INTO profile (user_id, spent_cash, date_time) values (?, 0, datetime('now', 'localtime'))", session["user_id"])
             elif spent_cash_check == 1:
-                db.execute("INSERT INTO profile (user_id, spent_cash, date_time) values (?, 1, datetime('now', 'localtime'))", currentUID)
+                db.execute("INSERT INTO profile (user_id, spent_cash, date_time) values (?, 1, datetime('now', 'localtime'))", session["user_id"])
 
 
         # Redirect user to home page
