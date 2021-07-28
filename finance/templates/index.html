@@ -23,7 +23,7 @@
                 <td></td>
                 <td></td>
                 <td></td>
-                <td><strong>[TOTAL]</strong></td>
+                <td><strong>{{portfoliototal}}</strong></td>
             </tr>
         </tfoot>
         <tbody>
@@ -36,6 +36,7 @@
                 </td>
                 <td>
                     <!-- companyname -->
+                    {{portfolio.name}}
                 </td>
                 <td>
                     <!-- shares -->
@@ -47,7 +48,7 @@
                 </td>
                 <td>
                     <!-- shares times price -->
-                    {{portfolio.totalvalue}}
+                    {{portfolio.totals}}
                 </td>
             </tr>
             {% endfor %}

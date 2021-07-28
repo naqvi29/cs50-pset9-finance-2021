@@ -66,12 +66,15 @@ def index():
         print("FALSE - user(" + session["username"] + ") HAVE NOT purchase stock")
         print("============================================================================")
         
+        # get initial cash value from users table
         cash = db.execute("SELECT cash FROM users WHERE id = ?;", session["user_id"])
         cash_before = usd(cash[0]["cash"])
         print("==========================================================================")
         print("CASH BALANCE")
         print(cash_before)
         print("==========================================================================")
+
+        return render_template("/index.html", portfolios=portfolios, cash_before=cash_before)
         
     elif spent_cash == 1:
         print("============================================================================")
@@ -86,7 +89,31 @@ def index():
         print(cash_before)
         print("==========================================================================")
 
-    return render_template("/index.html", portfolios=portfolios, cash_before=cash_before)
+        # INSERT dict-test.py
+        totals_list = []
+
+        # loop mechanics
+        print("==========================================================================")
+        print("UPDATING PORTFOLIOS DICT")
+        for i in range(len(portfolios)):
+            # update portfolio dict with info from lookup()
+            portfolios[i].update(lookup(portfolios[i]["symbol"]))
+            
+            # TODO - TOTAL = totalshares * price, add to dictionary
+            totals = portfolios[i]["totalshares"] * portfolios[i]["price"]
+            totals_list.append(totals)
+            portfolios[i].update(totals = totals)
+
+            # usd-fy price and totals
+            portfolios[i].update(price = usd(portfolios[i]["price"]))
+            portfolios[i].update(totals = usd(portfolios[i]["totals"]))
+
+        print(portfolios)
+        print("==========================================================================")
+
+        portfoliototal = usd(sum(totals_list) + cash[0]["cash_after"])
+
+        return render_template("/index.html", portfolios=portfolios, cash_before=cash_before, portfoliototal=portfoliototal)
 
 
 @app.route("/buy", methods=["GET", "POST"])
