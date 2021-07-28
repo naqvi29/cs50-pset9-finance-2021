@@ -63,7 +63,7 @@ def index():
     if spent_cash == 0:
         print("============================================================================")
         print("SPENT CASH")
-        print("FALSE - user(" + session["username"] + ") HAVE NOT purchase stock")
+        print("FALSE - user (" + session["username"] + ") HAVE NOT purchase stock")
         print("============================================================================")
         
         # get initial cash value from users table
@@ -79,7 +79,7 @@ def index():
     elif spent_cash == 1:
         print("============================================================================")
         print("SPENT CASH")
-        print("TRUE - user(" + session["username"] + ") HAVE purchase stock")
+        print("TRUE - user (" + session["username"] + ") HAVE purchase stock")
         print("============================================================================")
 
         cash = db.execute("SELECT cash_after FROM activities WHERE user_id = ? ORDER BY date_time DESC LIMIT 1;", session["user_id"])
@@ -199,7 +199,7 @@ def buy():
                 # set action
                 action = "Buy"
 
-                # insert to DB, to transactions table, on buy activity
+                # insert to DB, to activities table, on buy activity
                 db.execute("INSERT INTO activities (user_id, symbol, price, shares, action, cash_before, cash_after, date_time) values (?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))", session["user_id"], symbol, price, shares, action, cash_before, cash_after)
 
                 # update profile spent_cash to true
@@ -255,7 +255,7 @@ def buy():
                 # set action
                 action = "Buy"
 
-                # insert to DB, to transactions table, on buy activity
+                # insert to DB, to activities table, on buy activity
                 db.execute("INSERT INTO activities (user_id, symbol, price, shares, action, cash_before, cash_after, date_time) values (?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))", session["user_id"], symbol, price, shares, action, cash_before, cash_after)
 
                 # When a purchase is complete, redirect the user back to the index page.
@@ -398,8 +398,19 @@ def register():
 @login_required
 def sell():
     """Sell shares of stock"""
-    return apology("sell_shares_of_stock", "TODO")
-
+    if request.method == "POST":
+        # get symbol
+        # get shares
+        # db query, based on symbol and shares
+        # if try to sell more shares than user own - throw apology("TOO MANY SHARES")
+        
+        return redirect("/index.html")
+    
+    else:
+        # db query, get all unique symbols users own and shares at least 1
+        # return symbols to sell.html options
+        return render_template("/sell.html")
+    
 
 def errorhandler(e):
     """Handle error"""

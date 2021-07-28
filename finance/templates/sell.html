@@ -6,13 +6,18 @@
 
 {% block main %}
     <h1>Sell</h1>
-    <form action="/buy" method="post">
+    <form action="/sell" method="post">
         <div class="form-group">
-            <input autocomplete="on" autofocus class="form-control" name="symbol" placeholder="Symbol (e.g. AAPL, TSLA)" type="text">
+            <select class="form-control" name="symbol">
+                <option disabled selected value>Symbol</option>
+                <option>[option]</option>
+                <option>[option]</option>
+            </select>
             <br>
-            <input autocomplete="on" autofocus class="form-control" name="shares" placeholder="Shares" type="number" min="1">
+            <br>
+            <input autocomplete="on" class="form-control" name="shares" placeholder="Shares" type="number" min="1">
         </div>
         
-        <button class="btn btn-primary" type="submit">Buy</button>
+        <button class="btn btn-primary" type="submit">Sell</button>
     </form>
 {% endblock %}
