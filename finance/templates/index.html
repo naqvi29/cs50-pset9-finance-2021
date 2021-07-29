@@ -5,8 +5,7 @@
 {% endblock %}
 
 {% block main %}
-    <h1>Portfolio</h1>
-    
+<p>{{symbol}} {{price}} {{shares}}</p>
     <table class="table table-striped text-left">
         <thead>
             <tr>
@@ -17,18 +16,8 @@
                 <th>TOTAL</th>
             </tr>
         </thead>
-        <tfoot>
-            <tr>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td><strong>{{portfoliototal}}</strong></td>
-            </tr>
-        </tfoot>
         <tbody>
-            
-            {% for portfolio in portfolios %}
+        {% for portfolio in portfolios %}
             <tr>
                 <td>
                     <!-- symbol -->
@@ -51,7 +40,7 @@
                     {{portfolio.totals}}
                 </td>
             </tr>
-            {% endfor %}
+        {% endfor %}
             <tr>
                 <td>CASH</td>
                 <td></td>
@@ -59,7 +48,15 @@
                 <td></td>
                 <td>{{cash_before}}</td>
             </tr>
-            
         </tbody>
+        <tfoot>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td><strong>{{portfoliototal}}</strong></td>
+            </tr>
+        </tfoot>
     </table>
 {% endblock %}

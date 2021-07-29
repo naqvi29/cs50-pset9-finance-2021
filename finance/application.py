@@ -47,8 +47,6 @@ if not os.environ.get("API_KEY"):
 def index():
     """Show portfolio of stocks"""
 
-    # currentUID = session["user_id"]
-
     spent_cash = db.execute("SELECT spent_cash FROM profile WHERE user_id = ? ORDER BY date_time DESC LIMIT 1", session["user_id"])
     spent_cash = spent_cash[0]["spent_cash"]
 
@@ -60,6 +58,7 @@ def index():
     print(portfolios)
     print("============================================================================")
 
+    # user never spent any cash before - get cash from users table
     if spent_cash == 0:
         print("============================================================================")
         print("SPENT CASH")
@@ -76,6 +75,7 @@ def index():
 
         return render_template("/index.html", portfolios=portfolios, cash_before=cash_before)
 
+    # users have spent cash before - get money from users last recent activity
     elif spent_cash == 1:
         print("============================================================================")
         print("SPENT CASH")
@@ -113,7 +113,18 @@ def index():
 
         portfoliototal = usd(sum(totals_list) + cash[0]["cash_after"])
 
-        return render_template("/index.html", portfolios=portfolios, cash_before=cash_before, portfoliototal=portfoliototal)
+
+        recent_activity = db.execute("SELECT * FROM activities WHERE user_id = ? ORDER BY date_time DESC LIMIT 1", session["user_id"])
+        print("--------------------------------- RECENT ACTIVITY --------------------------------------")
+        print(recent_activity)
+        print(len(recent_activity[0]))
+
+        recent_activity_price = usd(recent_activity[0]["price"])
+        recent_activity_symbol = recent_activity[0]["symbol"]
+        recent_activity_shares = recent_activity[0]["shares"]
+        print("--------------------------------- --------------- --------------------------------------")
+
+        return render_template("/index.html", portfolios=portfolios, cash_before=cash_before, portfoliototal=portfoliototal, price=recent_activity_price, symbol=recent_activity_symbol, shares=recent_activity_shares)
 
 
 @app.route("/buy", methods=["GET", "POST"])
@@ -134,7 +145,7 @@ def buy():
         # currentUID = session["user_id"]
 
         # if symbol is blank or does not exist, return apology
-        if len(symbol) > 0 or result == None or symbol.isnumeric() == False:
+        if len(symbol) > 0 and result == None:
             return apology("Invalid Symbol")
         elif len(symbol) == 0 and result == None:
             return apology("Missing Symbol")
@@ -142,12 +153,15 @@ def buy():
         # Render an apology if shares input is not a positive integer.
         if len(shares) == 0:
             return apology("MISSING SHARES")
-        elif int(shares) <= 0:
-            return apology("NEGATIVE NUMBER")
-        # elif int(shares).is_integer() == False:
-        #     return apology("NUMBER NOT INT")
-        # elif int(shares).isalnum() == True:
-        #     return apology("NUMBER NOT INTz")
+        elif shares.isalpha() == True or shares.isnumeric() == False:
+            return apology("INVALID SHARES")
+        # elif shares.isnumeric() == True:
+        else:
+            shares = int(shares)
+
+            if shares <= 0:
+                return apology("MUST BE POSITIVE NUMBER")
+
 
         spent_cash = db.execute("SELECT spent_cash FROM profile WHERE user_id = ? ORDER BY date_time DESC LIMIT 1", session["user_id"])
         spent_cash = spent_cash[0]["spent_cash"]
@@ -181,7 +195,7 @@ def buy():
                 print("==========================================================================")
                 print("USER INPUT")
                 print("SYMBOL: " + symbol)
-                print("SHARES: " + shares)
+                print("SHARES: " + str(shares))
                 print("==========================================================================")
                 print("LOOKUP RETURN")
                 print(result)
@@ -237,7 +251,7 @@ def buy():
                 print("==========================================================================")
                 print("USER INPUT")
                 print("SYMBOL: " + symbol)
-                print("SHARES: " + shares)
+                print("SHARES: " + str(shares))
                 print("==========================================================================")
                 print("LOOKUP RETURN")
                 print(result)
