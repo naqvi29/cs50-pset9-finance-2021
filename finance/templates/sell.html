@@ -10,8 +10,9 @@
         <div class="form-group">
             <select class="form-control" name="symbol">
                 <option disabled selected value>Symbol</option>
-                <option>[option]</option>
-                <option>[option]</option>
+                {% for symbolown in symbolowns_list %}
+                <option>{{symbolown}}</option>
+                {% endfor %}
             </select>
             <br>
             <br>

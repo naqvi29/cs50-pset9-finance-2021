@@ -53,7 +53,7 @@ def index():
     spent_cash = spent_cash[0]["spent_cash"]
     
     # get total shares of each symbol
-    portfolios = db.execute("SELECT symbol, SUM(shares) as totalshares FROM activities WHERE user_id = ? GROUP BY symbol", session["user_id"])
+    portfolios = db.execute("SELECT symbol, SUM(shares) as totalshares FROM activities WHERE user_id = ? GROUP BY symbol HAVING SUM(shares) > 0", session["user_id"])
     
     print("============================================================================")
     print("PORTFOLIO")
@@ -197,9 +197,9 @@ def buy():
                 # https://tableplus.com/blog/2018/07/sqlite-how-to-use-datetime-value.html
                 
                 # set action
-                action = "Buy"
+                action = "buy"
 
-                # insert to DB, to activities table, on buy activity
+                # insert to DB activities table, on buy activity
                 db.execute("INSERT INTO activities (user_id, symbol, price, shares, action, cash_before, cash_after, date_time) values (?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))", session["user_id"], symbol, price, shares, action, cash_before, cash_after)
 
                 # update profile spent_cash to true
@@ -253,9 +253,9 @@ def buy():
                 # https://tableplus.com/blog/2018/07/sqlite-how-to-use-datetime-value.html
                 
                 # set action
-                action = "Buy"
+                action = "buy"
 
-                # insert to DB, to activities table, on buy activity
+                # insert to DB activities table, on buy activity
                 db.execute("INSERT INTO activities (user_id, symbol, price, shares, action, cash_before, cash_after, date_time) values (?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))", session["user_id"], symbol, price, shares, action, cash_before, cash_after)
 
                 # When a purchase is complete, redirect the user back to the index page.
@@ -269,7 +269,14 @@ def buy():
 @login_required
 def history():
     """Show history of transactions"""
-    return render_template("/history.html")
+    rows = db.execute("SELECT * FROM activities WHERE user_id = ?", session["user_id"])
+    
+    print("==================================")
+    print("HISTORY")
+    print(rows)
+    print("==================================")
+
+    return render_template("/history.html", rows=rows)
     # return apology("show_history_transactions","TODO")
 
 
@@ -400,16 +407,99 @@ def sell():
     """Sell shares of stock"""
     if request.method == "POST":
         # get symbol
+        symbol = request.form.get("symbol")
         # get shares
+        shares_to_sell = request.form.get("shares")
+        if len(shares_to_sell) == 0:
+            shares_to_sell = 0
+        else:
+            shares_to_sell = int(shares_to_sell)
+
+        # if user submit without symbol
+        if not symbol:
+            return apology("Missing Symbol", 400)
+        if not shares_to_sell:
+            return apology("Missing Shares", 400)
+                
         # db query, based on symbol and shares
+        totalshares_current = []
+        totalshares_current = db.execute("SELECT *, SUM(shares) as 'totalshares' FROM activities WHERE user_id = ? AND symbol = ?", session["user_id"],symbol)
+        totalshares_current_value = totalshares_current[0]["totalshares"]
+        # totalshares_current = totalshares_current[0]["totalshares"]
         # if try to sell more shares than user own - throw apology("TOO MANY SHARES")
-        
-        return redirect("/index.html")
+        print("*******************")
+        print(totalshares_current)
+        print("len(totalshares_current " + str(len(totalshares_current)))
+        print("totalshares_current[0][\"totalshares\"] " + str(totalshares_current[0]["totalshares"]) + " " + str(type(totalshares_current_value)))
+        print("shares_to_sell " + str(shares_to_sell) + " " +str(type(shares_to_sell)))
+        print("*******************")
+
+        # if db query returns empty list
+        if (len(totalshares_current) == 0):
+            return apology("YOU DON'T HAVE THIS STOCK!")
+        elif (len(totalshares_current) == 1):
+            if (shares_to_sell > totalshares_current_value):
+                return apology("TOO MANY SHARES")
+            else:
+                # check share selling logic
+                totalshares_after = totalshares_current_value - shares_to_sell
+                print("==========================================")
+                print("TOTAL SHARE AFTER")
+                print(totalshares_after)
+                print("SHARES TO SELL in NEGATIVE")
+                print(shares_to_sell * -1)
+                print("==========================================")
+
+                # lookup() price of stock
+                price = lookup(symbol)
+                print(price.get("price"))
+                price = price.get("price")
+
+                # update table
+                action = "sell"
+
+                # make shares to negative
+                shares_to_sell_neg = (-1 * shares_to_sell)
+                shares = shares_to_sell
+
+                # get current cash (i.e. cash_before, cash_after)
+                cash = db.execute("SELECT cash_after FROM activities WHERE user_id = ? ORDER BY date_time DESC LIMIT 1;", session["user_id"])
+                
+                # cash value to be computed (ie. sell = minus shares, plus cash_before), cash is int
+                # total price of shares to be sold
+                cash_before = cash[0]["cash_after"]
+                total_sell = float(shares) * price
+
+                # update cash_after
+                cash_after = cash_before + total_sell
+                
+                print("===========================")
+                print("TOTAL PRICE SHARES TO SHELL")
+                print(total_sell)
+                print("SHARES TO SELL neg")
+                print(shares_to_sell_neg)
+                print("===========================")
+                print("SELL - CASH BEFORE")
+                print(cash_before)
+                print("===========================")
+                print("SELL - CASH AFTER")
+                print(cash_after)
+                print("===========================")
+
+                # insert to DB activities table, on sell activity
+                db.execute("INSERT INTO activities (user_id, symbol, price, shares, action, cash_before, cash_after, date_time) values (?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))", session["user_id"], symbol, price, shares_to_sell_neg, action, cash_before, cash_after)
+
+                return redirect("/")
     
     else:
         # db query, get all unique symbols users own and shares at least 1
+        symbolowns = db.execute("SELECT DISTINCT symbol FROM activities WHERE user_id = ? GROUP BY symbol HAVING SUM(shares) > 0", session["user_id"])
+        symbolowns_list = []
+        for i in range(len(symbolowns)):
+            symbolowns_list.append(symbolowns[i]["symbol"])
+        print(symbolowns_list)
         # return symbols to sell.html options
-        return render_template("/sell.html")
+        return render_template("/sell.html", symbolowns_list=symbolowns_list)
     
 
 def errorhandler(e):

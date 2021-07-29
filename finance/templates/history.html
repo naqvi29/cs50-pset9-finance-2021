@@ -11,7 +11,6 @@
         <thead>
             <tr>
                 <th>Symbol</th>
-                <th>Action</th>
                 <th>Shares</th>
                 <th>Price</th>
                 <th>Transacted on</th>
@@ -19,27 +18,24 @@
         </thead>
         <tbody>
             
-            {% for portfolio in portfolios %}
+            {% for row in rows %}
             <tr>
                 <td>
                     <!-- symbol -->
-                    {{portfolio.symbol}}
+                    {{row.symbol}}
+                </td>
+                
+                <td>
+                    <!-- shares bought or sold-->
+                    {{row.shares}}
                 </td>
                 <td>
-                    <!-- companyname -->
-                    {{portfolio.name}}
+                    <!-- price at time of activity-->
+                    {{row.price}}
                 </td>
                 <td>
-                    <!-- shares -->
-                    {{portfolio.totalshares}}
-                </td>
-                <td>
-                    <!-- price -->
-                    {{portfolio.price}}
-                </td>
-                <td>
-                    <!-- shares times price -->
-                    {{portfolio.totalvalue}}
+                    <!-- date time of activity -->
+                    {{row.date_time}}
                 </td>
             </tr>
             {% endfor %}
