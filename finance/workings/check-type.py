@@ -1,16 +1,26 @@
-# import os
+shares = ["abc","23", "21av", "1.24", "-3", ""]
 
-# shares0 = "23"
-# shares1 = "21av"
-# shares2 = "1.24"
-# shares3 = ""
+for i in range(len(shares)):
+    print("[i = " + str(i) + "]")
+    if shares[i].isalnum() == True:
+        print(shares[i] + " - is alpha OR numeric")
 
-shares = ["23", "21av", "1.24", ""]
+    if shares[i].isnumeric() == True:
+        print(shares[i] + " - is numeric only")
+
+    if shares[i].isalpha() == True:
+        print(shares[i] + " - is alpha only")
+    print()
 
 
-if shares1.isalnum() == True:
-    print("shares1 is alphanumeric")
-else:
-    print("shares1 is NOT alphanumeric")
+# alphabet only
+# str.isalpha()
 
-# test
+# alphabet or numeric
+# str.isalnum()
+
+# numeric only
+# str.isnumeric()
+
+# Return True if the float instance is finite with integral value, and False otherwise
+# float.is_integer()

@@ -134,7 +134,7 @@ def buy():
         # currentUID = session["user_id"]
 
         # if symbol is blank or does not exist, return apology
-        if len(symbol) > 0 and result == None:
+        if len(symbol) > 0 or result == None or symbol.isnumeric() == False:
             return apology("Invalid Symbol")
         elif len(symbol) == 0 and result == None:
             return apology("Missing Symbol")
