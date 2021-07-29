@@ -118,6 +118,7 @@ def index():
         print("--------------------------------- RECENT ACTIVITY --------------------------------------")
         print(recent_activity)
         print(len(recent_activity[0]))
+        print(totals)
 
         recent_activity_price = usd(recent_activity[0]["price"])
         recent_activity_symbol = recent_activity[0]["symbol"]
