@@ -46,26 +46,26 @@ if not os.environ.get("API_KEY"):
 @login_required
 def index():
     """Show portfolio of stocks"""
-    
+
     # currentUID = session["user_id"]
 
     spent_cash = db.execute("SELECT spent_cash FROM profile WHERE user_id = ? ORDER BY date_time DESC LIMIT 1", session["user_id"])
     spent_cash = spent_cash[0]["spent_cash"]
-    
+
     # get total shares of each symbol
     portfolios = db.execute("SELECT symbol, SUM(shares) as totalshares FROM activities WHERE user_id = ? GROUP BY symbol HAVING SUM(shares) > 0", session["user_id"])
-    
+
     print("============================================================================")
     print("PORTFOLIO")
     print(portfolios)
     print("============================================================================")
-        
+
     if spent_cash == 0:
         print("============================================================================")
         print("SPENT CASH")
         print("FALSE - user (" + session["username"] + ") HAVE NOT purchase stock")
         print("============================================================================")
-        
+
         # get initial cash value from users table
         cash = db.execute("SELECT cash FROM users WHERE id = ?;", session["user_id"])
         cash_before = usd(cash[0]["cash"])
@@ -75,7 +75,7 @@ def index():
         print("==========================================================================")
 
         return render_template("/index.html", portfolios=portfolios, cash_before=cash_before)
-        
+
     elif spent_cash == 1:
         print("============================================================================")
         print("SPENT CASH")
@@ -98,7 +98,7 @@ def index():
         for i in range(len(portfolios)):
             # update portfolio dict with info from lookup()
             portfolios[i].update(lookup(portfolios[i]["symbol"]))
-            
+
             # TODO - TOTAL = totalshares * price, add to dictionary
             totals = portfolios[i]["totalshares"] * portfolios[i]["price"]
             totals_list.append(totals)
@@ -127,20 +127,27 @@ def buy():
         symbol = symbol.upper()
         result = lookup(symbol)
         shares = request.form.get("shares")
+        print("*****shares datatype******")
+        print(type(shares))
+        print(shares)
 
         # currentUID = session["user_id"]
-        
+
         # if symbol is blank or does not exist, return apology
         if len(symbol) > 0 and result == None:
-            return apology("Invalid Symbol", 400)
+            return apology("Invalid Symbol")
         elif len(symbol) == 0 and result == None:
-            return apology("Missing Symbol", 400)
+            return apology("Missing Symbol")
 
         # Render an apology if shares input is not a positive integer.
         if len(shares) == 0:
-            return apology("MISSING SHARES", 400)
-        elif int(shares) < 0:
-            return apology("NEGATIVE NUMBER", 400)
+            return apology("MISSING SHARES")
+        elif int(shares) <= 0:
+            return apology("NEGATIVE NUMBER")
+        # elif int(shares).is_integer() == False:
+        #     return apology("NUMBER NOT INT")
+        # elif int(shares).isalnum() == True:
+        #     return apology("NUMBER NOT INTz")
 
         spent_cash = db.execute("SELECT spent_cash FROM profile WHERE user_id = ? ORDER BY date_time DESC LIMIT 1", session["user_id"])
         spent_cash = spent_cash[0]["spent_cash"]
@@ -155,7 +162,7 @@ def buy():
             cash = db.execute("SELECT cash FROM users WHERE id = ?;", session["user_id"])
             # cash is int
             cash_before = cash[0]["cash"]
-        
+
             # get price of share from lookup result
             price = result.get("price")
 
@@ -165,7 +172,7 @@ def buy():
 
             # Render an apology, without completing a purchase, if the user cannot afford the number of shares at the current price
             if total_purchase > cash_before:
-                return apology("CAN'T AFFORD", 400)
+                return apology("CAN'T AFFORD")
             else:
                 # Compute cash left after purchase
                 cash_after = round(float(cash_before) - total_purchase, 2)
@@ -195,7 +202,7 @@ def buy():
                 # sqlite date time
                 # https://www.sqlitetutorial.net/sqlite-date/
                 # https://tableplus.com/blog/2018/07/sqlite-how-to-use-datetime-value.html
-                
+
                 # set action
                 action = "buy"
 
@@ -211,7 +218,7 @@ def buy():
             cash = db.execute("SELECT cash_after FROM activities WHERE user_id = ? ORDER BY date_time DESC LIMIT 1;", session["user_id"])
             # cash is int
             cash_before = cash[0]["cash_after"]
-        
+
             # get price of share from lookup result
             price = result.get("price")
 
@@ -221,7 +228,7 @@ def buy():
 
             # Render an apology, without completing a purchase, if the user cannot afford the number of shares at the current price
             if total_purchase > cash_before:
-                return apology("CAN'T AFFORD", 400)
+                return apology("CAN'T AFFORD")
             else:
                 # Compute cash left after purchase
                 cash_after = round(float(cash_before) - total_purchase, 2)
@@ -251,7 +258,7 @@ def buy():
                 # sqlite date time
                 # https://www.sqlitetutorial.net/sqlite-date/
                 # https://tableplus.com/blog/2018/07/sqlite-how-to-use-datetime-value.html
-                
+
                 # set action
                 action = "buy"
 
@@ -270,7 +277,7 @@ def buy():
 def history():
     """Show history of transactions"""
     rows = db.execute("SELECT * FROM activities WHERE user_id = ?", session["user_id"])
-    
+
     print("==================================")
     print("HISTORY")
     print(rows)
@@ -292,11 +299,11 @@ def login():
 
         # Ensure username was submitted
         if not request.form.get("username"):
-            return apology("must provide username", 403)
+            return apology("must provide username")
 
         # Ensure password was submitted
         elif not request.form.get("password"):
-            return apology("must provide password", 403)
+            return apology("must provide password")
 
         # Query database for username
         rows = db.execute("SELECT * FROM users WHERE username = ?", request.form.get("username"))
@@ -305,7 +312,7 @@ def login():
 
         # Ensure username exists and password is correct
         if len(rows) != 1 or not check_password_hash(rows[0]["hash"], request.form.get("password")):
-            return apology("invalid username and/or password", 403)
+            return apology("invalid username and/or password")
 
         # Remember which user has logged in
         session["user_id"] = rows[0]["id"]
@@ -313,9 +320,9 @@ def login():
         session["username"] = rows[0]["username"]
 
         # Check for first time login
-        
+
         # currentUID = session["user_id"]
-        
+
         num_of_login = db.execute("SELECT COUNT(*) FROM profile WHERE user_id = ?", session["user_id"])
         num_of_login = num_of_login[0]["COUNT(*)"]
 
@@ -356,28 +363,36 @@ def quote():
     """Get stock quote."""
     if request.method == "POST":
         symbol = request.form.get("symbol")
+        print("==========================")
+        print("len(symbol)")
+        print(len(symbol))
+
+        if (len(symbol) == 0):
+            return apology("Missing Symbol")
+        elif lookup(symbol) == None:
+            return apology("Invalid Symbol")
+
+        result = []
+
+        print("==========================")
+        print("QUOTE RESULT")
         result = lookup(symbol)
-        # name = result.get("name")
-        # price = result.get("price")
-        # symbol = result.get("symbol")
-        # print("==========================")
-        # print(len(symbol))
-        print("==========================")
         print(result)
+        print(len(result))
+        price = result.get("price")
+        price = usd(price)
+        print(price)
         print("==========================")
-        if len(symbol) > 0 and result == None:
-            return apology("Invalid Symbol", 400)
-        elif len(symbol) == 0 and result == None:
-            return apology("Missing Symbol", 400)
-        else:
-            return render_template("/quoted.html", result=result)
+
+        return render_template("/quoted.html", result=result,price=price)
+
     else:
         return render_template("/quote.html")
-        
+
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    """Register user"""   
+    """Register user"""
     if request.method == "POST":
         name = request.form.get("username")
         password = request.form.get("password")
@@ -417,10 +432,10 @@ def sell():
 
         # if user submit without symbol
         if not symbol:
-            return apology("Missing Symbol", 400)
+            return apology("Missing Symbol")
         if not shares_to_sell:
-            return apology("Missing Shares", 400)
-                
+            return apology("Missing Shares")
+
         # db query, based on symbol and shares
         totalshares_current = []
         totalshares_current = db.execute("SELECT *, SUM(shares) as 'totalshares' FROM activities WHERE user_id = ? AND symbol = ?", session["user_id"],symbol)
@@ -464,7 +479,7 @@ def sell():
 
                 # get current cash (i.e. cash_before, cash_after)
                 cash = db.execute("SELECT cash_after FROM activities WHERE user_id = ? ORDER BY date_time DESC LIMIT 1;", session["user_id"])
-                
+
                 # cash value to be computed (ie. sell = minus shares, plus cash_before), cash is int
                 # total price of shares to be sold
                 cash_before = cash[0]["cash_after"]
@@ -472,7 +487,7 @@ def sell():
 
                 # update cash_after
                 cash_after = cash_before + total_sell
-                
+
                 print("===========================")
                 print("TOTAL PRICE SHARES TO SHELL")
                 print(total_sell)
@@ -490,7 +505,7 @@ def sell():
                 db.execute("INSERT INTO activities (user_id, symbol, price, shares, action, cash_before, cash_after, date_time) values (?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))", session["user_id"], symbol, price, shares_to_sell_neg, action, cash_before, cash_after)
 
                 return redirect("/")
-    
+
     else:
         # db query, get all unique symbols users own and shares at least 1
         symbolowns = db.execute("SELECT DISTINCT symbol FROM activities WHERE user_id = ? GROUP BY symbol HAVING SUM(shares) > 0", session["user_id"])
@@ -500,7 +515,7 @@ def sell():
         print(symbolowns_list)
         # return symbols to sell.html options
         return render_template("/sell.html", symbolowns_list=symbolowns_list)
-    
+
 
 def errorhandler(e):
     """Handle error"""
