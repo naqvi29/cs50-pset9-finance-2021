@@ -118,14 +118,16 @@ def index():
         print("--------------------------------- RECENT ACTIVITY --------------------------------------")
         print(recent_activity)
         print(len(recent_activity[0]))
-        print(totals)
 
         recent_activity_price = usd(recent_activity[0]["price"])
         recent_activity_symbol = recent_activity[0]["symbol"]
         recent_activity_shares = recent_activity[0]["shares"]
+        recent_activity_totalpurchase = recent_activity_shares * recent_activity[0]["price"]
+        recent_activity_totalpurchase = usd(recent_activity_totalpurchase)
+        print(recent_activity_totalpurchase)
         print("--------------------------------- --------------- --------------------------------------")
 
-        return render_template("/index.html", portfolios=portfolios, cash_before=cash_before, portfoliototal=portfoliototal, price=recent_activity_price, symbol=recent_activity_symbol, shares=recent_activity_shares)
+        return render_template("/index.html", portfolios=portfolios, cash_before=cash_before, portfoliototal=portfoliototal, price=recent_activity_price, symbol=recent_activity_symbol, shares=recent_activity_shares, total_purchase=recent_activity_totalpurchase)
 
 
 @app.route("/buy", methods=["GET", "POST"])
@@ -185,6 +187,8 @@ def buy():
             total_purchase = float(shares) * price
             total_purchase = round(total_purchase, 2)
 
+            total_purchase_usd = total_purchase
+
             # Render an apology, without completing a purchase, if the user cannot afford the number of shares at the current price
             if total_purchase > cash_before:
                 return apology("CAN'T AFFORD")
@@ -210,6 +214,7 @@ def buy():
                 print("SHARES: " + str(shares))
                 print("PRICE: " + str(price))
                 print("TOTAL BUY: " + str(total_purchase))
+                print("TOTAL BUY (USD): " + str(total_purchase_usd))
                 print("TOTAL BUY DATATYPE: " + str(type(total_purchase)))
                 print("BALANCE: " + str(cash_after))
                 print("==========================================================================")
@@ -240,6 +245,8 @@ def buy():
             # compute total purchase
             total_purchase = float(shares) * price
             total_purchase = round(total_purchase, 2)
+            
+            total_purchase_usd = usd(total_purchase)
 
             # Render an apology, without completing a purchase, if the user cannot afford the number of shares at the current price
             if total_purchase > cash_before:
@@ -266,6 +273,7 @@ def buy():
                 print("SHARES: " + str(shares))
                 print("PRICE: " + str(price))
                 print("TOTAL BUY: " + str(total_purchase))
+                print("TOTAL BUY (USD): " + str(total_purchase_usd))
                 print("TOTAL BUY DATATYPE: " + str(type(total_purchase)))
                 print("BALANCE: " + str(cash_after))
                 print("==========================================================================")
