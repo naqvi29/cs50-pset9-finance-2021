@@ -6,7 +6,7 @@
 
 {% block main %}
     <h1>History</h1>
-    
+
     <table class="table table-striped text-left">
         <thead>
             <tr>
@@ -17,21 +17,21 @@
             </tr>
         </thead>
         <tbody>
-            
+
             {% for row in rows %}
             <tr>
                 <td>
                     <!-- symbol -->
                     {{row.symbol}}
                 </td>
-                
+
                 <td>
                     <!-- shares bought or sold-->
                     {{row.shares}}
                 </td>
                 <td>
                     <!-- price at time of activity-->
-                    {{row.price}}
+                    {{row.price | usd}}
                 </td>
                 <td>
                     <!-- date time of activity -->

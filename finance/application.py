@@ -185,7 +185,7 @@ def buy():
 
             # compute total purchase
             total_purchase = float(shares) * price
-            total_purchase = round(total_purchase, 2)
+            # total_purchase = round(total_purchase, 2)
 
             total_purchase_usd = total_purchase
 
@@ -195,6 +195,8 @@ def buy():
             else:
                 # Compute cash left after purchase
                 cash_after = round(float(cash_before) - total_purchase, 2)
+                # cash_after = round(float(cash_before) - total_purchase, 2)
+
 
                 # debug
                 print("==========================================================================")
@@ -233,7 +235,8 @@ def buy():
                 db.execute("INSERT INTO profile (user_id, spent_cash, date_time) values (?, 1, datetime('now', 'localtime'))", session["user_id"])
 
                 # When a purchase is complete, redirect the user back to the index page.
-                return redirect("/")
+                return render_template("/bought.html",symbol=symbol,shares=shares,price=usd(price),total_purchase=usd(total_purchase), cash=usd(cash_after))
+
         elif spent_cash == 1:
             cash = db.execute("SELECT cash_after FROM activities WHERE user_id = ? ORDER BY date_time DESC LIMIT 1;", session["user_id"])
             # cash is int
@@ -244,8 +247,8 @@ def buy():
 
             # compute total purchase
             total_purchase = float(shares) * price
-            total_purchase = round(total_purchase, 2)
-            
+            # total_purchase = round(total_purchase, 2)
+
             total_purchase_usd = usd(total_purchase)
 
             # Render an apology, without completing a purchase, if the user cannot afford the number of shares at the current price
@@ -254,6 +257,7 @@ def buy():
             else:
                 # Compute cash left after purchase
                 cash_after = round(float(cash_before) - total_purchase, 2)
+                # cash_after = float(cash_before) - total_purchase
 
                 # debug
                 print("==========================================================================")
@@ -289,7 +293,7 @@ def buy():
                 db.execute("INSERT INTO activities (user_id, symbol, price, shares, action, cash_before, cash_after, date_time) values (?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))", session["user_id"], symbol, price, shares, action, cash_before, cash_after)
 
                 # When a purchase is complete, redirect the user back to the index page.
-                return redirect("/")
+                return render_template("/bought.html",symbol=symbol,shares=shares,price=usd(price),total_purchase=usd(total_purchase),cash=usd(cash_after))
 
     else:
         return render_template("/buy.html")
@@ -527,7 +531,8 @@ def sell():
                 # insert to DB activities table, on sell activity
                 db.execute("INSERT INTO activities (user_id, symbol, price, shares, action, cash_before, cash_after, date_time) values (?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))", session["user_id"], symbol, price, shares_to_sell_neg, action, cash_before, cash_after)
 
-                return redirect("/")
+                return render_template("/sold.html", symbol=symbol, shares=shares_to_sell, price=usd(price), total_sell=usd(total_sell), cash=usd(cash_after))
+                # return redirect("/")
 
     else:
         # db query, get all unique symbols users own and shares at least 1
