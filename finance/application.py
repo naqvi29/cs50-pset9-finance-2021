@@ -180,7 +180,6 @@ def buy():
                 cash_after = round(float(cash_before) - total_purchase, 2)
                 # cash_after = round(float(cash_before) - total_purchase, 2)
 
-
                 # debug
                 print("=================================================================")
                 print("USER INPUT")
