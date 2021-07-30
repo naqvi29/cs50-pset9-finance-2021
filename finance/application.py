@@ -46,6 +46,7 @@ if not os.environ.get("API_KEY"):
 @login_required
 def index():
     """Show portfolio of stocks"""
+    print("-------------------------- START INDEX --------------------------")
 
     spent_cash = db.execute("SELECT spent_cash FROM profile WHERE user_id = ? ORDER BY date_time DESC LIMIT 1", session["user_id"])
     spent_cash = spent_cash[0]["spent_cash"]
@@ -53,48 +54,41 @@ def index():
     # get total shares of each symbol
     portfolios = db.execute("SELECT symbol, SUM(shares) as totalshares FROM activities WHERE user_id = ? GROUP BY symbol HAVING SUM(shares) > 0", session["user_id"])
 
-    print("============================================================================")
-    print("PORTFOLIO")
+    print("PORTFOLIO FROM DB")
     print(portfolios)
-    print("============================================================================")
 
     # user never spent any cash before - get cash from users table
     if spent_cash == 0:
-        print("============================================================================")
+        print("=================================================================")
         print("SPENT CASH")
         print("FALSE - user (" + session["username"] + ") HAVE NOT purchase stock")
-        print("============================================================================")
 
         # get initial cash value from users table
         cash = db.execute("SELECT cash FROM users WHERE id = ?;", session["user_id"])
         cash_before = usd(cash[0]["cash"])
-        print("==========================================================================")
         print("CASH BALANCE")
         print(cash_before)
-        print("==========================================================================")
+        print("--------------------------- END INDEX ---------------------------")
 
         return render_template("/index.html", portfolios=portfolios, cash_before=cash_before)
 
     # users have spent cash before - get money from users last recent activity
     elif spent_cash == 1:
-        print("============================================================================")
         print("SPENT CASH")
         print("TRUE - user (" + session["username"] + ") HAVE purchase stock")
-        print("============================================================================")
 
         cash = db.execute("SELECT cash_after FROM activities WHERE user_id = ? ORDER BY date_time DESC LIMIT 1;", session["user_id"])
         cash_before = usd(cash[0]["cash_after"])
-        print("==========================================================================")
         print("CASH BALANCE")
         print(cash_before)
-        print("==========================================================================")
 
         # INSERT dict-test.py
         totals_list = []
 
         # loop mechanics
-        print("==========================================================================")
-        print("UPDATING PORTFOLIOS DICT")
+        print("=================================================================")
+        print("GET LOOKUP & UPDATE PORTFOLIOS DICT")
+        print("=================================================================")
         for i in range(len(portfolios)):
             # update portfolio dict with info from lookup()
             portfolios[i].update(lookup(portfolios[i]["symbol"]))
@@ -107,27 +101,16 @@ def index():
             # usd-fy price and totals
             portfolios[i].update(price = usd(portfolios[i]["price"]))
             portfolios[i].update(totals = usd(portfolios[i]["totals"]))
-
+        print("=================================================================")
+        print("PORTFOLIOS DICT UPDATED")
         print(portfolios)
-        print("==========================================================================")
+        print("=================================================================")
 
         portfoliototal = usd(sum(totals_list) + cash[0]["cash_after"])
 
+        print("--------------------------- END INDEX ---------------------------")
 
-        recent_activity = db.execute("SELECT * FROM activities WHERE user_id = ? ORDER BY date_time DESC LIMIT 1", session["user_id"])
-        print("--------------------------------- RECENT ACTIVITY --------------------------------------")
-        print(recent_activity)
-        print(len(recent_activity[0]))
-
-        recent_activity_price = usd(recent_activity[0]["price"])
-        recent_activity_symbol = recent_activity[0]["symbol"]
-        recent_activity_shares = recent_activity[0]["shares"]
-        recent_activity_totalpurchase = recent_activity_shares * recent_activity[0]["price"]
-        recent_activity_totalpurchase = usd(recent_activity_totalpurchase)
-        print(recent_activity_totalpurchase)
-        print("--------------------------------- --------------- --------------------------------------")
-
-        return render_template("/index.html", portfolios=portfolios, cash_before=cash_before, portfoliototal=portfoliototal, price=recent_activity_price, symbol=recent_activity_symbol, shares=recent_activity_shares, total_purchase=recent_activity_totalpurchase)
+        return render_template("/index.html", portfolios=portfolios, cash_before=cash_before, portfoliototal=portfoliototal)
 
 
 @app.route("/buy", methods=["GET", "POST"])
@@ -135,8 +118,11 @@ def index():
 def buy():
     """Buy shares of stock"""
     if request.method == "POST":
-        print("============================================================================")
-        print("BUY")
+        print("--------------------------- BUY START ---------------------------")
+
+        spent_cash = db.execute("SELECT spent_cash FROM profile WHERE user_id = ? ORDER BY date_time DESC LIMIT 1", session["user_id"])
+        spent_cash = spent_cash[0]["spent_cash"]
+
         symbol = request.form.get("symbol")
         symbol = symbol.upper()
         result = lookup(symbol)
@@ -144,7 +130,8 @@ def buy():
         print("*****shares datatype******")
         print(type(shares))
         print(shares)
-
+        print("SPENT CASH - 0 is FALSE, 1 is TRUE (0, 1 is int)")
+        print(spent_cash)
         # currentUID = session["user_id"]
 
         # if symbol is blank or does not exist, return apology
@@ -164,14 +151,6 @@ def buy():
 
             if shares <= 0:
                 return apology("MUST BE POSITIVE NUMBER")
-
-
-        spent_cash = db.execute("SELECT spent_cash FROM profile WHERE user_id = ? ORDER BY date_time DESC LIMIT 1", session["user_id"])
-        spent_cash = spent_cash[0]["spent_cash"]
-        print("============================================================================")
-        print("SPENT CASH - 0 is FALSE, 1 is TRUE (0, 1 is int)")
-        print(spent_cash)
-        print("============================================================================")
 
         if spent_cash == 0:
             # access user table to get cash of current user
@@ -199,19 +178,16 @@ def buy():
 
 
                 # debug
-                print("==========================================================================")
+                print("=================================================================")
                 print("USER INPUT")
                 print("SYMBOL: " + symbol)
                 print("SHARES: " + str(shares))
-                print("==========================================================================")
                 print("LOOKUP RETURN")
                 print(result)
-                print("==========================================================================")
                 print("DATABASE OUTPUT")
                 print("ID: "+ str(session["user_id"]))
                 print("CURRENT CASH: " + str(cash_before))
                 print("CURRENT CASH DATATYPE: " + str(type(cash_before)))
-                print("==========================================================================")
                 print("BUY LOGICS")
                 print("SHARES: " + str(shares))
                 print("PRICE: " + str(price))
@@ -219,7 +195,7 @@ def buy():
                 print("TOTAL BUY (USD): " + str(total_purchase_usd))
                 print("TOTAL BUY DATATYPE: " + str(type(total_purchase)))
                 print("BALANCE: " + str(cash_after))
-                print("==========================================================================")
+                print("=================================================================")
 
                 # sqlite date time
                 # https://www.sqlitetutorial.net/sqlite-date/
@@ -235,6 +211,7 @@ def buy():
                 db.execute("INSERT INTO profile (user_id, spent_cash, date_time) values (?, 1, datetime('now', 'localtime'))", session["user_id"])
 
                 # When a purchase is complete, redirect the user back to the index page.
+                print("--------------------------- BUY END ---------------------------")
                 return render_template("/bought.html",symbol=symbol,shares=shares,price=usd(price),total_purchase=usd(total_purchase), cash=usd(cash_after))
 
         elif spent_cash == 1:
@@ -260,19 +237,16 @@ def buy():
                 # cash_after = float(cash_before) - total_purchase
 
                 # debug
-                print("==========================================================================")
+                print("=================================================================")
                 print("USER INPUT")
                 print("SYMBOL: " + symbol)
                 print("SHARES: " + str(shares))
-                print("==========================================================================")
                 print("LOOKUP RETURN")
                 print(result)
-                print("==========================================================================")
                 print("DATABASE OUTPUT")
                 print("ID: "+ str(session["user_id"]))
                 print("CURRENT CASH: " + str(cash_before))
                 print("CURRENT CASH DATATYPE: " + str(type(cash_before)))
-                print("==========================================================================")
                 print("BUY LOGICS")
                 print("SHARES: " + str(shares))
                 print("PRICE: " + str(price))
@@ -280,7 +254,7 @@ def buy():
                 print("TOTAL BUY (USD): " + str(total_purchase_usd))
                 print("TOTAL BUY DATATYPE: " + str(type(total_purchase)))
                 print("BALANCE: " + str(cash_after))
-                print("==========================================================================")
+                print("=================================================================")
 
                 # sqlite date time
                 # https://www.sqlitetutorial.net/sqlite-date/
@@ -293,6 +267,7 @@ def buy():
                 db.execute("INSERT INTO activities (user_id, symbol, price, shares, action, cash_before, cash_after, date_time) values (?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))", session["user_id"], symbol, price, shares, action, cash_before, cash_after)
 
                 # When a purchase is complete, redirect the user back to the index page.
+                print("--------------------------- BUY END ---------------------------")
                 return render_template("/bought.html",symbol=symbol,shares=shares,price=usd(price),total_purchase=usd(total_purchase),cash=usd(cash_after))
 
     else:
@@ -304,11 +279,9 @@ def buy():
 def history():
     """Show history of transactions"""
     rows = db.execute("SELECT * FROM activities WHERE user_id = ?", session["user_id"])
-
-    print("==================================")
-    print("HISTORY")
+    print("--------------------------- START HISTORY ---------------------------")
     print(rows)
-    print("==================================")
+    print("---------------------------- END HISTORY ----------------------------")
 
     return render_template("/history.html", rows=rows)
     # return apology("show_history_transactions","TODO")
@@ -334,8 +307,10 @@ def login():
 
         # Query database for username
         rows = db.execute("SELECT * FROM users WHERE username = ?", request.form.get("username"))
-
+        print("=================================================================")
+        print("LOGIN")
         print(rows)
+        print("=================================================================")
 
         # Ensure username exists and password is correct
         if len(rows) != 1 or not check_password_hash(rows[0]["hash"], request.form.get("password")):
@@ -389,10 +364,8 @@ def logout():
 def quote():
     """Get stock quote."""
     if request.method == "POST":
+        print("-------------------------- START QUOTE --------------------------")
         symbol = request.form.get("symbol")
-        print("==========================")
-        print("len(symbol)")
-        print(len(symbol))
 
         if (len(symbol) == 0):
             return apology("Missing Symbol")
@@ -400,17 +373,23 @@ def quote():
             return apology("Invalid Symbol")
 
         result = []
-
-        print("==========================")
-        print("QUOTE RESULT")
         result = lookup(symbol)
+
+        # check symbol input
+        print("CHECK symbol")
+        print(symbol)
+        print("len(symbol)")
+        print(len(symbol))
+
+        # check lookup result
+        print("QUOTE RESULT")
         print(result)
         print(len(result))
         price = result.get("price")
         price = usd(price)
         print(price)
-        print("==========================")
 
+        print("--------------------------- END QUOTE ---------------------------")
         return render_template("/quoted.html", result=result,price=price)
 
     else:
@@ -448,6 +427,7 @@ def register():
 def sell():
     """Sell shares of stock"""
     if request.method == "POST":
+        print("--------------------------- SELL START ---------------------------")
         # get symbol
         symbol = request.form.get("symbol")
         # get shares
@@ -469,12 +449,6 @@ def sell():
         totalshares_current_value = totalshares_current[0]["totalshares"]
         # totalshares_current = totalshares_current[0]["totalshares"]
         # if try to sell more shares than user own - throw apology("TOO MANY SHARES")
-        print("*******************")
-        print(totalshares_current)
-        print("len(totalshares_current " + str(len(totalshares_current)))
-        print("totalshares_current[0][\"totalshares\"] " + str(totalshares_current[0]["totalshares"]) + " " + str(type(totalshares_current_value)))
-        print("shares_to_sell " + str(shares_to_sell) + " " +str(type(shares_to_sell)))
-        print("*******************")
 
         # if db query returns empty list
         if (len(totalshares_current) == 0):
@@ -483,18 +457,9 @@ def sell():
             if (shares_to_sell > totalshares_current_value):
                 return apology("TOO MANY SHARES")
             else:
-                # check share selling logic
-                totalshares_after = totalshares_current_value - shares_to_sell
-                print("==========================================")
-                print("TOTAL SHARE AFTER")
-                print(totalshares_after)
-                print("SHARES TO SELL in NEGATIVE")
-                print(shares_to_sell * -1)
-                print("==========================================")
-
                 # lookup() price of stock
                 price = lookup(symbol)
-                print(price.get("price"))
+                # print(price.get("price"))
                 price = price.get("price")
 
                 # update table
@@ -515,24 +480,29 @@ def sell():
                 # update cash_after
                 cash_after = cash_before + total_sell
 
-                print("===========================")
-                print("TOTAL PRICE SHARES TO SHELL")
+                # check share selling logic
+                totalshares_after = totalshares_current_value - shares_to_sell
+                print("================================================================")
+                print("TOTAL SHARE AFTER")
+                print(totalshares_after)
+                print("SHARES TO SELL in NEGATIVE")
+                print(shares_to_sell * -1)
+                print("TOTAL SELL")
                 print(total_sell)
                 print("SHARES TO SELL neg")
                 print(shares_to_sell_neg)
-                print("===========================")
                 print("SELL - CASH BEFORE")
                 print(cash_before)
-                print("===========================")
                 print("SELL - CASH AFTER")
                 print(cash_after)
-                print("===========================")
+                print("================================================================")
 
                 # insert to DB activities table, on sell activity
                 db.execute("INSERT INTO activities (user_id, symbol, price, shares, action, cash_before, cash_after, date_time) values (?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))", session["user_id"], symbol, price, shares_to_sell_neg, action, cash_before, cash_after)
 
+                print("--------------------------- SELL END ---------------------------")
+
                 return render_template("/sold.html", symbol=symbol, shares=shares_to_sell, price=usd(price), total_sell=usd(total_sell), cash=usd(cash_after))
-                # return redirect("/")
 
     else:
         # db query, get all unique symbols users own and shares at least 1
@@ -540,7 +510,7 @@ def sell():
         symbolowns_list = []
         for i in range(len(symbolowns)):
             symbolowns_list.append(symbolowns[i]["symbol"])
-        print(symbolowns_list)
+        # print(symbolowns_list)
         # return symbols to sell.html options
         return render_template("/sell.html", symbolowns_list=symbolowns_list)
 
