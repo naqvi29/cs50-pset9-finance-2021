@@ -46,7 +46,7 @@ if not os.environ.get("API_KEY"):
 @login_required
 def index():
     """Show portfolio of stocks"""
-    print("-------------------------- START INDEX --------------------------")
+    print("\x1b[6;30;42m" + "-------------------------- START INDEX --------------------------" + "\x1b[0m")
 
     spent_cash = db.execute("SELECT spent_cash FROM profile WHERE user_id = ? ORDER BY date_time DESC LIMIT 1", session["user_id"])
     spent_cash = spent_cash[0]["spent_cash"]
@@ -68,7 +68,7 @@ def index():
         cash_before = usd(cash[0]["cash"])
         print("CASH BALANCE")
         print(cash_before)
-        print("--------------------------- END INDEX ---------------------------")
+        print("\x1b[6;37;41m" + "--------------------------- END INDEX ---------------------------" + "\x1b[0m")
 
         return render_template("/index.html", portfolios=portfolios, cash_before=cash_before)
 
@@ -108,7 +108,7 @@ def index():
 
         portfoliototal = usd(sum(totals_list) + cash[0]["cash_after"])
 
-        print("--------------------------- END INDEX ---------------------------")
+        print("\x1b[6;37;41m" + "--------------------------- END INDEX ---------------------------" + "\x1b[0m")
 
         return render_template("/index.html", portfolios=portfolios, cash_before=cash_before, portfoliototal=portfoliototal)
 
@@ -118,21 +118,25 @@ def index():
 def buy():
     """Buy shares of stock"""
     if request.method == "POST":
-        print("--------------------------- BUY START ---------------------------")
+        print("\x1b[6;30;42m" + "--------------------------- BUY START ---------------------------" + "\x1b[0m")
 
         spent_cash = db.execute("SELECT spent_cash FROM profile WHERE user_id = ? ORDER BY date_time DESC LIMIT 1", session["user_id"])
         spent_cash = spent_cash[0]["spent_cash"]
-
         symbol = request.form.get("symbol")
         symbol = symbol.upper()
-        result = lookup(symbol)
+
         shares = request.form.get("shares")
-        print("*****shares datatype******")
+        print("================================================================")
+        result = lookup(symbol)
+        print("================================================================")
+        print("SHARES DATA TYPE from form.get")
         print(type(shares))
         print(shares)
-        print("SPENT CASH - 0 is FALSE, 1 is TRUE (0, 1 is int)")
-        print(spent_cash)
-        # currentUID = session["user_id"]
+        print("\x1b[4;30;47m" + "USER SPENT CASH?"+ "\x1b[0m")
+        if spent_cash == 0:
+            print("NO - get cash from user table")
+        elif spent_cash == 1:
+            print("YES - get cash from activities table")
 
         # if symbol is blank or does not exist, return apology
         if len(symbol) > 0 and result == None:
@@ -211,7 +215,7 @@ def buy():
                 db.execute("INSERT INTO profile (user_id, spent_cash, date_time) values (?, 1, datetime('now', 'localtime'))", session["user_id"])
 
                 # When a purchase is complete, redirect the user back to the index page.
-                print("--------------------------- BUY END ---------------------------")
+                print("\x1b[6;37;41m" + "--------------------------- BUY END ---------------------------" + "\x1b[0m")
                 return render_template("/bought.html",symbol=symbol,shares=shares,price=usd(price),total_purchase=usd(total_purchase), cash=usd(cash_after))
 
         elif spent_cash == 1:
@@ -267,7 +271,7 @@ def buy():
                 db.execute("INSERT INTO activities (user_id, symbol, price, shares, action, cash_before, cash_after, date_time) values (?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))", session["user_id"], symbol, price, shares, action, cash_before, cash_after)
 
                 # When a purchase is complete, redirect the user back to the index page.
-                print("--------------------------- BUY END ---------------------------")
+                print("\x1b[6;37;41m" + "--------------------------- BUY END ---------------------------" + "\x1b[0m")
                 return render_template("/bought.html",symbol=symbol,shares=shares,price=usd(price),total_purchase=usd(total_purchase),cash=usd(cash_after))
 
     else:
@@ -279,9 +283,9 @@ def buy():
 def history():
     """Show history of transactions"""
     rows = db.execute("SELECT * FROM activities WHERE user_id = ?", session["user_id"])
-    print("--------------------------- START HISTORY ---------------------------")
+    print("\x1b[6;30;42m" + "--------------------------- START HISTORY ---------------------------" + "\x1b[0m")
     print(rows)
-    print("---------------------------- END HISTORY ----------------------------")
+    print("\x1b[6;37;41m" + "---------------------------- END HISTORY ----------------------------" + "\x1b[0m")
 
     return render_template("/history.html", rows=rows)
     # return apology("show_history_transactions","TODO")
@@ -307,10 +311,8 @@ def login():
 
         # Query database for username
         rows = db.execute("SELECT * FROM users WHERE username = ?", request.form.get("username"))
-        print("=================================================================")
-        print("LOGIN")
+        print("\x1b[6;30;43m" + "============================= LOGIN =============================" + "\x1b[0m")
         print(rows)
-        print("=================================================================")
 
         # Ensure username exists and password is correct
         if len(rows) != 1 or not check_password_hash(rows[0]["hash"], request.form.get("password")):
@@ -364,9 +366,10 @@ def logout():
 def quote():
     """Get stock quote."""
     if request.method == "POST":
-        print("-------------------------- START QUOTE --------------------------")
+        print("\x1b[6;30;42m" + "-------------------------- START QUOTE --------------------------" + "\x1b[0m")
         symbol = request.form.get("symbol")
 
+        print("================================================================")
         if (len(symbol) == 0):
             return apology("Missing Symbol")
         elif lookup(symbol) == None:
@@ -374,6 +377,7 @@ def quote():
 
         result = []
         result = lookup(symbol)
+        print("================================================================")
 
         # check symbol input
         print("CHECK symbol")
@@ -389,7 +393,7 @@ def quote():
         price = usd(price)
         print(price)
 
-        print("--------------------------- END QUOTE ---------------------------")
+        print("\x1b[6;37;41m" + "--------------------------- END QUOTE ---------------------------" + "\x1b[0m")
         return render_template("/quoted.html", result=result,price=price)
 
     else:
@@ -427,7 +431,7 @@ def register():
 def sell():
     """Sell shares of stock"""
     if request.method == "POST":
-        print("--------------------------- SELL START ---------------------------")
+        print("\x1b[6;30;42m" + "--------------------------- SELL START ---------------------------" + "\x1b[0m")
         # get symbol
         symbol = request.form.get("symbol")
         # get shares
@@ -500,7 +504,7 @@ def sell():
                 # insert to DB activities table, on sell activity
                 db.execute("INSERT INTO activities (user_id, symbol, price, shares, action, cash_before, cash_after, date_time) values (?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))", session["user_id"], symbol, price, shares_to_sell_neg, action, cash_before, cash_after)
 
-                print("--------------------------- SELL END ---------------------------")
+                print("\x1b[6;37;41m" + "--------------------------- SELL END ---------------------------" + "\x1b[0m")
 
                 return render_template("/sold.html", symbol=symbol, shares=shares_to_sell, price=usd(price), total_sell=usd(total_sell), cash=usd(cash_after))
 
