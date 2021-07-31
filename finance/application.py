@@ -424,6 +424,44 @@ def register():
         return render_template("/register.html")
 
 
+@app.route("/change_pass", methods=["GET", "POST"])
+@login_required
+def change_pass():
+    """Change password for personal touch"""
+    if request.method == "POST":
+        print("\x1b[6;30;42m" + "------------------------ CHANGE PASS START ------------------------" + "\x1b[0m")
+        current_pass = request.form.get("current_password")
+        new_pass = request.form.get("new_password")
+
+        hnew_pass = generate_password_hash(new_pass)
+
+        print(current_pass)
+        print(new_pass)
+
+        # get hash from db
+        check_current_h = db.execute("SELECT hash FROM users WHERE id = ?", session["user_id"])
+        print("check_current_h")
+        print(check_current_h)
+        print(check_current_h[0]["hash"])
+        check_current_h = check_current_h[0]["hash"]
+
+        if check_password_hash(check_current_h, current_pass) == True:
+            print("HASH MATCHED! - OK TO CHANGE PASSWORD")
+
+            db.execute("UPDATE users SET hash = ? WHERE id = ?", hnew_pass, session["user_id"])
+
+            return render_template("/success_change_pass.html")
+
+        else:
+            print("HASH DID NOT MATCH!")
+            return apology("Entered Wrong Current Password")
+
+        
+        print("\x1b[6;37;41m" + "------------------------- CHANGE PASS END -------------------------" + "\x1b[0m")
+
+    else:
+        return render_template("/change_pass.html")
+
 
 @app.route("/sell", methods=["GET", "POST"])
 @login_required
