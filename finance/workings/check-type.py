@@ -1,4 +1,4 @@
-shares = ["abc","23", "21av", "1.24", "-3", ""]
+shares = ["abc", "23", "21av", "1.24", "-3", ""]
 
 for i in range(len(shares)):
     print("[i = " + str(i) + "]")
